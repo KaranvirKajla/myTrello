@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const PrivateBoard = require("./privateBoard")
-const PublicBoard = require("./publicBoard")
+const PublicBoard = require("./publicBoard");
+const Team = require("./team")
 let personSchema = new mongoose.Schema({
     email:{
         unique:true,
@@ -21,6 +22,10 @@ let personSchema = new mongoose.Schema({
     publicBoards:[{
         type: mongoose.Schema.Types.ObjectId,
         ref: "PublicBoard"
+    }],
+    teams:[{
+        type: mongoose.Schema.Types.ObjectId,
+        ref:"Team"
     }]
 })
 

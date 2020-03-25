@@ -152,7 +152,7 @@
     <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Change Background</button>
     <div class="dropdown-menu">
 
-      <form action="/background" method="POST" class="form-group">
+      <form action="/teamBackground" method="POST" class="form-group">
         <input type="text" readonly style="display: none;" name="bid" id="" value="<%=board._id%>">
         <input readonly style="display: none;" type="text" name="id" value="<%=person._id%>">
       
@@ -202,7 +202,7 @@
 
                 <div class="card mt-2" style="width: 17rem; color:black">
                     <div class="card-body">
-                      <form action="/cards" method="POST">
+                      <form action="/teamCards" method="POST">
                         <input readonly style="display: none;"  type="text" name="id" id="id" value="<%= person._id %>">
                         <input readonly style="display: none;"  type="text" name="bid" id="bid" value="<%= board._id%>">
                         <input readonly style="display: none;"  type="text" name="lid" id="lid" value="<%= board.lists[i]._id%>">
@@ -225,7 +225,7 @@
 
     <div class="card ml-3" style="width: 18rem; display: inline-block;">
         <div class="card-body">
-            <form action="/lists" method="POST">
+            <form action="/teamLists" method="POST">
               <input readonly style="display: none;"  type="text" name="id" id="id" value="<%= person._id %>">
               <input readonly style="display: none;"  type="text" name="bid" id="bid" value="<%= board._id%>">
            <input type="text" class="form-control" name="listTitle" id="listTitle" placeholder="Enter list title">

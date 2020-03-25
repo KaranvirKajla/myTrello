@@ -9,6 +9,7 @@ const PublicBoard = require("./models/publicBoard");
 const List = require("./models/list");
 const Card = require("./models/card");
 const Comment = require("./models/comment");
+const Team = require("./models/team")
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.static('public'));
 app.use(bodyParser.json());
@@ -65,7 +66,7 @@ app.post("/login",function (req,res) {
 })
 app.get("/home/:id",function(req,res){
     let id = req.params.id;
-    Person.findOne({_id:id},function(err,found){
+    Person.findOne({_id:id}).populate("privateBoards").exec(function(err,found){
         if(err){console.log(err)}else{
            // console.log("homehomehomehomehomehomehomehomehomehomehomehome",found)
             res.render("home.ejs",{person:found});
@@ -75,12 +76,13 @@ app.get("/home/:id",function(req,res){
 })
 app.get("/createBoard/:id",function(req,res){
     let id = req.params.id;
-    Person.findOne({_id:id},function(err,found){
+    Person.findOne({_id:id}).populate("teams").exec(function(err,found){
         if(err){console.log(err)}else{
-           // console.log("createBoardcreateBoardcreateBoardcreateBoardcreateBoardcreateBoardcreateBoardcreateBoard",found);
-            res.render("createBoard.ejs",{person:found});
-        }
+            // console.log("createBoardcreateBoardcreateBoardcreateBoardcreateBoardcreateBoardcreateBoardcreateBoard",found);
+             res.render("createBoard.ejs",{person:found});
+         }
     })
+  
 
 })
 app.post("/createBoard",function(req,res){
@@ -106,7 +108,24 @@ app.post("/createBoard",function(req,res){
             }
         })
     }else{
-
+        let tid = type;
+        console.log(tid);
+        PublicBoard.create({creator:email,name:name},function(err,board){
+            if(err){console.log(err);}else{
+                Person.findOne({email:email},function(err,found){
+                    if(err){console.log(err);}else{
+                        found.publicBoards.push(board);
+                        found.save(function(err,data){
+                            if(err){console.log(err);}else{
+                                console.log(data);
+                            }
+                        })
+                        console.log("createBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeamcreateBoardTeam",board)
+                        res.redirect("/tb/"+found._id+"/"+board._id);
+                    }
+                })
+            }
+        })
     }
 
 })
@@ -356,11 +375,215 @@ app.post("/boardDetails",function(req,res){
     })
 })
 
+app.post("/teamBoardDetails",function(req,res){
+    let id = req.body.id;
+    let bid = req.body.bid;
+    let name = req.body.name;
+    let description = req.body.description;
+    let background = req.body.background;
+    console.log("boardDetailsboardDetailsboardDetailsboardDetailsboardDetailsboardDetailsboardDetailsboardDetailsboardDetailsboardDetailsboardDetails",id,"bbb",bid,"nnn",name,"ddd",description,"bbb",background);
+    PrivateBoard.findOneAndUpdate({_id:bid},{name:name,description:description,background:background},function(err,found){
+        if(err){console.log(err)}else{
+            res.redirect("/tb/"+id+"/"+bid);
+        }
+    })
+})
+
+app.get("/createTeam/:id",function(req,res){
+    let id = req.params.id;
+    Person.findOne({_id:id},function(err,found){
+        if(err){console.log(err);}else{
+            res.render("createTeam.ejs",{person:found});
+        }
+    })
+   
+})
+app.post("/createTeam",function(req,res){
+    let id = req.body.id;
+    let name = req.body.name;
+    let type = req.body.type;
+    let description = req.body.description;
+
+    Person.findOne({_id:id},function(err,found){
+        if(err){console.log(err);}else{
+            
+            Team.create({creator:found,name:name,type:type,description:description,members:[found],boards:[]},function(err,team){
+                if(err){console.log(err)}else{
+                    console.log(team);
+                    found.teams.push(team);
+                    found.save(function(err,data){
+                        if(err){console.log(err);}else{
+                            console.log("createTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeamcreateTeam",found);
+                            res.redirect("/homeBoard/"+found._id);
+                        }
+                    });
+
+                }
+            })
 
 
 
 
 
+        }
+    })
+    
+})
+
+app.get("/homeBoard/:id",function(req,res){
+    let id = req.params.id;
+    Person.findOne({_id:id}).populate("publicBoards").populate("privateBoards").exec(function(err,found){
+        if(err){console.log(err);}else{
+            res.render("homeBoard.ejs",{person:found})
+        }
+    })
+  
+    
+})
+
+app.get("/tb/:id/:bid",function(req,res){
+    let id = req.params.id;
+    let bid = req.params.bid;
+
+    Person.findOne({_id:id}).populate("publicBoards").populate("privateBoards").exec(function(err,found){
+        if(err){console.log("11111111111111111111111111111111",err)}else{
+            PublicBoard.findOne({_id:bid}).populate({path:"lists",populate:{path:"cards"}}).exec(function(err,foundBoard){
+                if(err){console.log(err);}else{
+
+
+
+
+
+
+                    console.log("ffffffffffffffffffffffffffffffffffff",found,foundBoard)
+                 
+                    res.render("teamBoard.ejs",{person:found,board:foundBoard});
+                }
+            })
+
+        }
+    })
+})
+
+app.get("/tc/:id/:bid/:lid/:cid",function(req,res){
+    let id = req.params.id;
+    let bid = req.params.bid;
+    let lid = req.params.lid;
+    let cid = req.params.cid;
+    //console.log("cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",id,"bbbbbb",bid,"llllllll",lid,"cccccc",cid)
+    Person.findOne({_id:id}).populate("publicBoards").populate("privateBoards").exec(function(err,found){
+        if(err){console.log("t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1t1",err)}else{
+          
+
+            PublicBoard.findOne({_id:bid}).populate({path:"lists",populate:{path:"cards"}}).exec(function(err,foundBoard){
+                if(err){console.log(err);}else{
+
+
+
+
+
+
+                    console.log("tftftftftftftftftftftftftftftftftftftftftftftftftf",foundBoard)
+                    console.log(foundBoard.lists[0]);
+                    res.render("teamBoard.ejs",{person:found,board:foundBoard,list:lid});
+                }
+            })
+
+        }
+    })
+
+})
+app.get("/tl/:id/:bid/:lid",function(req,res){
+    let id = req.params.id;
+    let bid = req.params.bid;
+    let lid = req.params.lid;
+    console.log("/b/:id/:bid/b/:id/:bid/b/:id/:bid/b/:id/:bid/b/:id/:bid/b/:id/:bid/b/:id/:bid/b/:id/:bid/b/:id/:bid/b/:id/:bid/b/:id/:bid/b/:id/:bid/b/:id/:bid",bid,"lllllllll",lid)
+    Person.findOne({_id:id}).populate("publicBoards").populate("privateBoards").exec(function(err,found){
+        if(err){console.log("11111111111111111111111111111111",err)}else{
+         
+            PublicBoard.findOne({_id:bid}).populate({path:"lists",populate:{path:"cards"}}).exec(function(err,foundBoard){
+                if(err){console.log(err);}else{
+
+
+
+
+
+
+                    console.log("ffffffffffffffffffffffffffffffffffff",foundBoard)
+                 
+                    res.render("teamBoard.ejs",{person:found,board:foundBoard,list:lid});
+                }
+            })
+
+        }
+    })
+
+})
+
+
+
+app.post("/teamLists",function(req,res){
+    let id = req.body.id;
+    let bid = req.body.bid;
+    let listTitle = req.body.listTitle;
+
+    List.create({title:listTitle,cards:[]},function(err,list){
+        if(err){console.log(err)}else{
+            PublicBoard.findOne({_id:bid},function(err,foundBoard){
+                if(err){console.log(err)}else{
+                    foundBoard.lists.push(list);
+                    foundBoard.save(function(err,data){
+                        if(err){console.log(err)}else{
+                            console.log(data);
+
+                        }
+                    })
+                    console.log("list._idlist._idlist._idlist._idlist._idlist._idlist._idlist._idlist._idlist._idlist._idlist._idlist._idlist._idlist._idlist._idlist._idlist._idlist._idlist._id",list._id);
+
+
+                    res.redirect("/tl/"+id+"/"+bid+"/"+list._id);
+                }
+            })
+        }
+
+    })
+
+})
+app.post("/teamCards",function(req,res){
+    let id = req.body.id;
+    let bid = req.body.bid;
+    let lid = req.body.lid;
+    let cardTitle = req.body.cardTitle;
+console.log("cardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscardscards","iiiiiiiiiii",id,"bbbbbbbbb",bid,"llllllllllll",lid,cardTitle);
+    Card.create({title:cardTitle,comments:[]},function(err,card){
+        if(err){console.log(err)}else{
+            List.findOne({_id:lid},function(err,foundList){
+                if(err){console.log(err);}else{
+                    foundList.cards.push(card);
+                    foundList.save(function(err,data){
+                        if(err){console.log(err);}else{
+                            console.log(data);
+                        }
+                    })
+                    res.redirect("/tc/"+id+"/"+bid+"/"+lid+"/"+card._id);
+                }
+            })
+
+        }
+    })
+})
+
+app.post("/teamBackground",function(req,res){
+    let id = req.body.id;
+    let bid = req.body.bid;
+    let background = req.body.background;
+    PublicBoard.findOneAndUpdate({_id:bid},{background:background},function(err,found){
+        if(err){console.log(err)}else{
+            console.log(found);
+            res.redirect("/tb"+"/"+id+"/"+bid);
+        }
+    })
+})
 
 
 mongoose.connect("mongodb://localhost:27017/trello").then(()=>{
